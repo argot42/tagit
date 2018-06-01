@@ -3,6 +3,7 @@ package flags
 import (
 	"os/user"
 	"flag"
+	"errors"
 	"path/filepath"
 )
 
@@ -37,11 +38,20 @@ func Init_flags() error {
 	flag.BoolVar(&Args.Verbose, "v", false, "verbose output")
 	flag.BoolVar(&Args.Interactive, "i", false, "ask for confirmation after performing actions")
 	flag.BoolVar(&Args.Client, "ii", false, "fire up the CLI client")
-
 	flag.Var(&Args.Tags, "t", "list of tags")
 
 	flag.Parse()
 
 	Args.Files = flag.Args()
+
+	if !Args.Client {
+		switch {
+		case len(Args.Tags) == 0:
+			return errors.New("tags required on batch mode")
+		case len(Args.Files) == 0:
+			return errors.New("you need to specify files on batch mode")
+		}
+	}
+
 	return nil
 }

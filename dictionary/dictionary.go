@@ -3,14 +3,49 @@ package dictionary
 import (
 	"os"
 	"io"
-	"path/filepath"
+	"sort"
 	"bufio"
 	"strings"
+	"path/filepath"
 )
 
 type Dictionary struct {
 	Path string
-	Words []string
+	Tags []string
+}
+
+func (d *Dictionary) Add (tag string) (err error) {
+	// insert into structure
+	sortedInsert(tag, &d.Tags)
+
+	// write to file
+	f, err := os.Open(d.Path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	err = sortedWrite(tag, f)
+
+	return
+}
+
+func sortedInsert (tag string, s *[]string) {
+	index := sort.SearchStrings(*s, tag)
+
+	*slc = append(*slc, "")
+	copy((*slc)[index+1:], (*slc)[index:])
+	(*slc)[index] = tag
+}
+
+func sortedWrite (tag string, f *os.File) error {
+}
+
+func (d *Dictionary) Empty() bool {
+	return len(d.Path) == 0
+}
+
+func (d *Dictionary) Name() string {
+	return Path
 }
 
 func LoadDictionary (path string) (d Dictionary, err error) {
@@ -35,7 +70,7 @@ func LoadDictionary (path string) (d Dictionary, err error) {
 			return
 		}
 
-		d.Words = append(d.Words, strings.TrimRight(line, "\r\n"))	
+		d.Tags = append(d.Tags, strings.TrimRight(line, "\r\n"))	
 	}
 
 	return d, nil
