@@ -74,9 +74,5 @@ func ChooseNumeric (defaultAnswer int, options interface{}, format string, a ...
 	fmt.Printf(format + optionBox, a)
 	fmt.Scanln(&input)
 
-	if input >= 0 {
-		return input
-	}
-
-	return defaultAnswer
+	return input
 }

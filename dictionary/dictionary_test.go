@@ -2,6 +2,7 @@ package dictionary
 
 import (
 	"os"
+	"sort"
 	"testing"
 )
 
@@ -77,5 +78,32 @@ func TestCreateDict (t *testing.T) {
 			continue
 		}
 		t.Logf("Cleanup, removed %s\n", path.Path)
+	}
+}
+
+func TestAddTag (t *testing.T) {
+	dict, err := LoadDictionary("/tmp/test001")
+	if err != nil { t.Fatal(err) }
+
+	tags := []string{ "foo0", "a", "c", "b", "x", "i", "f", "d" }
+	//tags := []string{ "e", "b", "a" }
+	for _, s := range tags {
+		err = dict.Add(s + "\n")
+
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+	}
+}
+
+func TestLoadDict (t *testing.T) {
+	dict, err := LoadDictionary("/tmp/test001")
+	if err != nil { t.Fatal(err) }
+
+	t.Log(dict.Tags)
+
+	if !sort.StringsAreSorted(dict.Tags) {
+		t.Fatal("not sorted")
 	}
 }

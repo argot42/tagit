@@ -62,14 +62,16 @@ func interactive (filepath string, dict dictionary.Dictionary) {
 
 	for _, tag := range flags.Args.Tags {
 		// if dictionary is not empty ask do a fuzzy search
-		if !dict.Empty() {
+		if dict.Initialized() {
 			// fuzzy search (that fails at exact match)
 			matches, err := file.FFind(tag, dict, fileproc.ExactFail)
 
 			// if exact match add to word
 			if err == fileproc.ExactMatchErr {
-				if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tag, file.Name) {
-					file.Add(tag)
+				if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tag, file.Name()) {
+
+					// adding tag to file
+					if err := file.Add(tag); err != nil { warningFile(tag, file.Path(), err) }
 				}
 				continue
 
@@ -82,23 +84,30 @@ func interactive (filepath string, dict dictionary.Dictionary) {
 
 			// if no matches add tag to file and dictionary (ask user)
 			if len(matches) == 0 {
-				if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tag, file.Name) {
-					file.Add(tag)
+				if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tag, file.Name()) {
+					
+					// adding tag to file
+					if err := file.Add(tag); err != nil { warningFile(tag, file.Path(), err) }
 
 					if options.YesNo(options.Yes, "Add tag (%s) to dictionary (%s) ?", tag, dict.Name()) {
-						err = dict.Add(tag)
-						if err != nil {
-							if flags.Args.Verbose { fmt.Fprintf(os.Stderr, "Warning %s\n", err.Error()) }
-						}
+						if err := dict.Add(tag); err != nil { warningDict(tag, dict.Name(), err) }
 					}
 				}
 				continue
 			}
 
 			// if matches
-			switch options.ChooseNumeric(0, matches, "choose tag") {
-			case 0:
+			matches_plus_tag := append(matches, tag)
+			o := options.ChooseNumeric(0, matches_plus_tag, "choose tag")	
 
+			if o >= 0 && o < len(matches_plus_tag) {
+				if err := file.Add(matches_plus_tag[o]); err != nil { warningFile(tag, file.Path(), err) }
+
+				if options.YesNo(options.Yes, "Add tag (%s) to dictionary (%s) ?", tag, dict.Name()) {
+					if err := dict.Add(matches_plus_tag[o]); err != nil {
+						warningDict(tag, dict.Name(), err)
+					}
+				}
 			}
 		}
 	}
