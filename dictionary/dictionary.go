@@ -13,6 +13,14 @@ import (
 
 const BUFFER = 2048
 
+const (
+	ExactFail = iota
+)
+
+var (
+	ExactMatchErr = errors.New("exact match")
+)
+
 type Dictionary struct {
 	Path string
 	Tags []string

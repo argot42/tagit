@@ -8,6 +8,7 @@ import (
 	"github.com/argot42/tagit/dictionary"
 	"github.com/argot42/tagit/options"
 	"github.com/argot42/tagit/fileproc"
+	"github.com/argot42/tagit/utils"
 )
 
 func batch (defaultDict dictionary.Dictionary) {
@@ -61,53 +62,43 @@ func interactive (filepath string, dict dictionary.Dictionary) {
 	}
 
 	for _, tag := range flags.Args.Tags {
-		// if dictionary is not empty ask do a fuzzy search
+		tagToAdd := tag
+		validToDict := false // flag used to ask to add or not to dictionary
+
+		// if dictionary is initialized do a fuzzy search
 		if dict.Initialized() {
-			// fuzzy search (that fails at exact match)
-			matches, err := file.FFind(tag, dict, fileproc.ExactFail)
+			// fuzzy sarch (that returns an error on exact match)
+			matches, err := dict.FFind(tag, dictionary.ExactFail)
 
-			// if exact match add to word
-			if err == fileproc.ExactMatchErr {
-				if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tag, file.Name()) {
-
-					// adding tag to file
-					if err := file.Add(tag); err != nil { warningFile(tag, file.Path(), err) }
-				}
+			switch {
+			case err != nil && err != dictionary.ExactMatchErr:
+				warning("Warning fuzzy match (%s): %s\n", tag, err.Error())
 				continue
+			case err == dictionary.ExactMatchErr:
+				// if exact match do nothing
+			case len(matches) == 0:
+				// if there're no matches
+				validToDict = true
+			default:
+				// if there're matches
+				matches_plus_tag := utils.Prepend(tag, matches)
+				o := options.ChooseNumeric(0, matches_plus_tag, "choose tag")
 
-			} else if err != nil { // if it is another type of error warn
-				if flags.Args.Verbose { 
-					fmt.Fprintf(os.Stderr, "Warning fuzzy match (%s): %s\n", tag, err.Error()) 
-				}
-				continue
+				if o < 0 || o >= len(matches_plus_tag) { continue }
+
+				tagToAdd = matches_plus_tag[o]
+				validToDict = true
 			}
+		}
 
-			// if no matches add tag to file and dictionary (ask user)
-			if len(matches) == 0 {
-				if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tag, file.Name()) {
-					
-					// adding tag to file
-					if err := file.Add(tag); err != nil { warningFile(tag, file.Path(), err) }
-
-					if options.YesNo(options.Yes, "Add tag (%s) to dictionary (%s) ?", tag, dict.Name()) {
-						if err := dict.Add(tag); err != nil { warningDict(tag, dict.Name(), err) }
-					}
-				}
-				continue
-			}
-
-			// if matches
-			matches_plus_tag := append(matches, tag)
-			o := options.ChooseNumeric(0, matches_plus_tag, "choose tag")	
-
-			if o >= 0 && o < len(matches_plus_tag) {
-				if err := file.Add(matches_plus_tag[o]); err != nil { warningFile(tag, file.Path(), err) }
-
-				if options.YesNo(options.Yes, "Add tag (%s) to dictionary (%s) ?", tag, dict.Name()) {
-					if err := dict.Add(matches_plus_tag[o]); err != nil {
-						warningDict(tag, dict.Name(), err)
-					}
-				}
+		// add tag to file (ask user)
+		if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tagToAdd, file.Name()) {
+			if err := file.Add(tagToAdd); err != nil { warningFile(tagToAdd, file.Path(), err) }
+			
+			// add tag to dictionary if flags allows it (ask user)
+			if !validToDict { continue }
+			if options.YesNo(options.Yes, "Add tag (%s) to dictionary (%s) ?", tagToAdd, dict.Name()) {
+				if err := dict.Add(tagToAdd); err != nil { warningDict(tagToAdd, dict.Name(), err) }	
 			}
 		}
 	}
