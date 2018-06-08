@@ -3,12 +3,12 @@ package dictionary
 import (
 	"os"
 	"io"
-	"sort"
 	"bufio"
 	"bytes"
 	"errors"
 	"strings"
 	"path/filepath"
+	"github.com/argot42/tagit/utils"
 )
 
 const BUFFER = 2048
@@ -31,7 +31,7 @@ func (d *Dictionary) Add (tag string) (err error) {
 	if !d.Initialized() { return errors.New("The dictionary is not initialized") }
 
 	// insert into structure
-	sortedInsert(tag, &d.Tags)
+	utils.StringSortedInsert(tag, &d.Tags)
 
 	// write to file
 	f, err := os.OpenFile(d.Path, os.O_RDWR, 0644)
@@ -44,19 +44,11 @@ func (d *Dictionary) Add (tag string) (err error) {
 	return
 }
 
-func sortedInsert (tag string, slc *[]string) {
-	index := sort.SearchStrings(*slc, tag)
-
-	*slc = append(*slc, "")
-	copy((*slc)[index+1:], (*slc)[index:])
-	(*slc)[index] = tag
-}
-
 func sortedWrite (tag string, f *os.File) (err error) {
 	position, err := findPos([]byte(tag), f)
 	if err != nil { return }
 
-	err = writeInto([]byte(tag), position, f)
+	err = writeInto([]byte(tag + "\n"), position, f)
 
 	return
 }
@@ -140,6 +132,10 @@ func LoadDictionary (path string) (d Dictionary, err error) {
 	}
 
 	return d, nil
+}
+
+func (d *Dictionary) FFind (tag string, flag int) (matches []string, err error) {
+	return d.Tags, nil
 }
 
 func CreateDictionary (path string) (d Dictionary, err error) {

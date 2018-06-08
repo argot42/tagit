@@ -82,13 +82,13 @@ func TestCreateDict (t *testing.T) {
 }
 
 func TestAddTag (t *testing.T) {
-	dict, err := LoadDictionary("/tmp/test001")
+	dict, err := LoadDictionary("/tmp/test/test001")
 	if err != nil { t.Fatal(err) }
 
-	tags := []string{ "foo0", "a", "c", "b", "x", "i", "f", "d" }
+	tags := []string{ "foo0", "a", "c", "b", "x", "i", "f", "d", "漢" }
 	//tags := []string{ "e", "b", "a" }
 	for _, s := range tags {
-		err = dict.Add(s + "\n")
+		err = dict.Add(s)
 
 		if err != nil {
 			t.Error(err)

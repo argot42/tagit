@@ -57,7 +57,7 @@ func batch (defaultDict dictionary.Dictionary) {
 func interactive (filepath string, dict dictionary.Dictionary) {
 	file, err := fileproc.Parse(filepath)
 	if err != nil {
-		if flags.Args.Verbose { fmt.Fprintf(os.Stderr, "Warning while parsing: %s\n", err.Error()) }
+		warning("Warning while parsing: %s\n", err.Error())
 		return
 	}
 
@@ -82,18 +82,19 @@ func interactive (filepath string, dict dictionary.Dictionary) {
 			default:
 				// if there're matches
 				matches_plus_tag := utils.Prepend(tag, matches)
-				o := options.ChooseNumeric(0, matches_plus_tag, "choose tag")
+				o := options.ChooseNumeric(0, matches_plus_tag, "Choose tag ")
 
 				if o < 0 || o >= len(matches_plus_tag) { continue }
 
 				tagToAdd = matches_plus_tag[o]
-				validToDict = true
+				if o == 0 { validToDict = true } 
 			}
 		}
 
 		// add tag to file (ask user)
 		if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tagToAdd, file.Name()) {
-			if err := file.Add(tagToAdd); err != nil { warningFile(tagToAdd, file.Path(), err) }
+			//if err := file.Add(tagToAdd); err != nil { warningFile(tagToAdd, file.Path(), err) }
+			file.Add(tagToAdd)
 			
 			// add tag to dictionary if flags allows it (ask user)
 			if !validToDict { continue }
@@ -102,6 +103,9 @@ func interactive (filepath string, dict dictionary.Dictionary) {
 			}
 		}
 	}
+
+	// write tags to filename
+	if err := file.Write(); err != nil { warningFile(file.Path(), err) }
 }
 
 func noninteractive (filepath string) {

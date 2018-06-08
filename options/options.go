@@ -67,12 +67,13 @@ func ChooseNumeric (defaultAnswer int, options interface{}, format string, a ...
 	case None:
 		optionBox = ": "
 	default:
-		optionBox = "[" + strconv.Itoa(defaultAnswer) + "] "
+		optionBox = "[" + strconv.Itoa(defaultAnswer) + "]: "
 	}
 
 	input := defaultAnswer
-	fmt.Printf(format + optionBox, a)
+	fmt.Printf(format + optionBox, a...)
 	fmt.Scanln(&input)
 
+	fmt.Println("option:", input)
 	return input
 }

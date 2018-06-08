@@ -3,24 +3,33 @@ package fileproc
 import (
 	"os"
 	"regexp"
-	"errors"
+	"strings"
 	"path/filepath"
+	"github.com/argot42/tagit/utils"
 )
 
-var r = regexp.MustCompile(`^[\w\s]+\[([\w\s]*)\][\.\w]*`)
+var r = regexp.MustCompile(`^([\p{L}\s\w]*)\[?([\p{L}\s\w]*)\]?$`)
 
 type File struct {
 	path string
 	name string
+	ext string
 	brackets bool
 	tags []string
 }
 
-func (f *File) Add (tag string) (err error) {
+func (f *File) Add (tag string) {
+	utils.StringSortedInsert(tag, &f.tags)
+}
+
+func (f *File) Write() error {
+	return os.Rename(f.path, filepath.Join(
+			filepath.Dir(f.path),
+			f.name + "[" + strings.Join(f.tags, " ") + "]" + f.ext))
 }
 
 func (f *File) Name() string {
-	return f.name
+	return f.name + f.ext
 }
 
 func (f *File) Path() (path string) {
@@ -31,21 +40,18 @@ func Parse (path string) (file *File, err error) {
 	fi, err := os.Stat(path)
 	if err != nil { return }
 
-	match := r.FindAllStringSubmatch(fi.Name(), -1)
+	name, extension := utils.SplitNameExt(fi.Name())
+	file = &File{
+		path: path,
+		ext: extension,
+	}
 
-	switch len(match) {
-	case 0:
-		file = &File{
-			path: path,
-			name: fi.Name(),
-		}
-	default:
-		file = &File{
-			path: path,
-			name: fi.Name(),
-			brackets: true,
-		}
-		if len(match[0]) > 1 { file.tags = match[0][1:] }
+	match := r.FindStringSubmatch(name)
+
+	file.name = match[1] // parsed filename
+	if len(match[2]) > 0 {
+		file.brackets = true
+		file.tags = strings.Split(match[2], " ")
 	}
 
 	return
