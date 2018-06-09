@@ -135,13 +135,15 @@ func LoadDictionary (path string) (d Dictionary, err error) {
 }
 
 func (d *Dictionary) FFind (tag string, flag int) (matches []string, err error) {
-	return d.Tags, nil
+	//return d.Tags, nil
+	return
 }
 
 func CreateDictionary (path string) (d Dictionary, err error) {
-	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0664)
 	if err != nil { return }
 	defer file.Close()
 
+	d.Path = path
 	return
 }

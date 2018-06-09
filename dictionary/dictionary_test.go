@@ -4,6 +4,7 @@ import (
 	"os"
 	"sort"
 	"testing"
+	"path/filepath"
 )
 
 type PathTest struct {
@@ -50,14 +51,16 @@ func TestNewDict (t *testing.T) {
 
 func TestCreateDict (t *testing.T) {
 	list_of_tests := []PathTest{ 
-		PathTest{ Type: FAIL, Path: "/tmp" },
+		PathTest{ Type: SUCCESS, Path: "/tmp" },
 		PathTest{ Type: SUCCESS, Path: "/tmp/test" },
-		PathTest{ Type: SUCCESS, Path: "./test" },
-		PathTest{ Type: SUCCESS, Path: "../test" },
+		//PathTest{ Type: SUCCESS, Path: "./test" },
+		//PathTest{ Type: SUCCESS, Path: "../test" },
 	}
 
 	for _,path := range list_of_tests {
-		_, err := CreateDictionary(path.Path)	
+		dictPath := filepath.Join(path.Path, ".dict.db")
+
+		_, err := CreateDictionary(dictPath)
 		
 		if err != nil {
 			if path.Type == SUCCESS {
@@ -72,12 +75,12 @@ func TestCreateDict (t *testing.T) {
 			continue
 		}
 
-		err = os.Remove(path.Path)
+		err = os.Remove(dictPath)
 		if err != nil {
 			t.Errorf("Error while removing %s\n", path.Path)
 			continue
 		}
-		t.Logf("Cleanup, removed %s\n", path.Path)
+		t.Logf("Cleanup, removed %s\n", dictPath)
 	}
 }
 
