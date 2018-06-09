@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 	"path/filepath"
 	"github.com/argot42/tagit/flags"
 	"github.com/argot42/tagit/dictionary"
@@ -28,7 +29,7 @@ func interactive (defaultDict dictionary.Dictionary) {
 		// parse file
 		file, err := fileproc.Parse(item)
 		if err != nil {
-			warning("Warning while parsing: %s\n", err.Error())
+			warning("Warning while parsing (%s): %s\n", item, err.Error())
 			return
 		}
 
@@ -81,7 +82,66 @@ func interactive (defaultDict dictionary.Dictionary) {
 }
 
 func noninteractive (defaultDict dictionary.Dictionary) {
-	fmt.Println("noninteractive")
+	info, err := concur(defaultDict)
+
+	out:
+	for {
+		select {
+		case i, more := <-info:
+			if !more { break out }
+			if flags.Args.Verbose{ fmt.Print(i) }
+		case e := <-err:
+			warning(e.Error())
+		}
+	}
+}
+
+func concur (defaultDict dictionary.Dictionary) (info chan string, err chan error) {
+	var wg sync.WaitGroup
+	info = make(chan string, len(flags.Args.Files))
+	err = make(chan error, len(flags.Args.Files))
+
+	// process files
+	wg.Add(len(flags.Args.Files))
+	for _, f := range flags.Args.Files { go processFile(f, loadd(f, defaultDict), info, err, &wg) }
+
+	// wait until all goroutines finish and then close channels
+	// to signal main to end
+	go func() {
+		wg.Wait()
+		close(info)
+	}()
+
+	return
+}
+
+func processFile (path string, dict dictionary.Dictionary, info chan string, e chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	file, err := fileproc.Parse(path)	
+	if err != nil {
+		e<-fmt.Errorf("Warning while parsing (%s): %s\n", path, err.Error())
+		return
+	}
+
+	for _, tag := range flags.Args.Tags {
+		file.Add(tag)
+
+		// writing to dict
+		if err = dict.Add(tag); err != nil {
+			e<-fmt.Errorf("Warning adding tag (%s) to dictionary (%s): %s\n", tag, dict.Name(), err.Error())
+			continue
+		}
+		
+		info<-fmt.Sprintf("Tag (%s) added to dictionary (%s)!\n", tag, dict.Name())
+	}
+
+	if err = file.Write(); err != nil {
+		e<-fmt.Errorf("Warning writing tags to file (%s) failed\n", file.Name())
+		return
+	}
+
+	info<-fmt.Sprintf("Tags written to file (%s)!\n", file.Name())
 }
 
 func loadd (filename string, defaultDict dictionary.Dictionary) (currentDict dictionary.Dictionary) {
