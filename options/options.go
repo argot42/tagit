@@ -50,13 +50,13 @@ func in (str string, list []string) bool {
 func ChooseNumeric (defaultAnswer int, options interface{}, format string, a ...interface{}) int {
 	switch o := options.(type) {
 	case []string:
-		for _, v := range o { fmt.Println(v) }
+		for i, v := range o { fmt.Println(i, v) }
 	case []int:
-		for _, v := range o { fmt.Println(v) }
+		for i, v := range o { fmt.Println(i, v) }
 	case []float32:
-		for _, v := range o { fmt.Println(v) }
+		for i, v := range o { fmt.Println(i, v) }
 	case []float64:
-		for _, v := range o { fmt.Println(v) }
+		for i, v := range o { fmt.Println(i, v) }
 	default:
 		panic(errors.New("Type " + fmt.Sprint(o) + " not supported"))
 	}
