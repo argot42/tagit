@@ -9,6 +9,7 @@ import (
 	"strings"
 	"path/filepath"
 	"github.com/argot42/tagit/utils"
+	"github.com/renstrom/fuzzysearch/fuzzy"
 )
 
 const BUFFER = 2048
@@ -135,7 +136,18 @@ func LoadDictionary (path string) (d Dictionary, err error) {
 }
 
 func (d *Dictionary) FFind (tag string, flag int) (matches []string, err error) {
-	//return d.Tags, nil
+	switch flag {
+	case ExactFail:
+		rank := fuzzy.RankFindFold(tag, d.Tags)
+		for _,v := range rank {
+			if v.Distance == 0 { return []string{}, ExactMatchErr }
+			matches = append(matches, v.Target)
+		}
+
+	default:
+		matches = fuzzy.FindFold(tag, d.Tags)
+	}
+
 	return
 }
 
