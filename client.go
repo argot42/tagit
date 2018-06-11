@@ -6,5 +6,5 @@ import (
 )
 
 func client(defaultDict dictionary.Dictionary) {
-	fmt.Println(defaultDict)
+	fmt.Println("Coming soon")
 }
