@@ -4,9 +4,9 @@ import (
 	"testing"
 )
 
-func TestNumeric (t *testing.T) {
+func TestNumeric(t *testing.T) {
 	def := 0
-	op := []string{ "hi", "how", "are", "you" }
+	op := []string{"hi", "how", "are", "you"}
 
 	o := ChooseNumeric(def, op, "choose")
 

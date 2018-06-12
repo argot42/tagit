@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"github.com/argot42/tagit/flags"
 	"github.com/argot42/tagit/dictionary"
+	"github.com/argot42/tagit/flags"
 	"github.com/argot42/tagit/options"
+	"os"
 )
 
-func main() {	
+func main() {
 	err := flags.Init_flags()
 	checkError(err)
 
-	if flags.Args.Verbose { fmt.Println("Loading default dictionary") }
+	if flags.Args.Verbose {
+		fmt.Println("Loading default dictionary")
+	}
 
 	defaultDictionary, err := dictionary.LoadDictionary(flags.Args.DB)
 
@@ -33,14 +35,18 @@ func main() {
 			// if there's an error and has the verbose flag print a warn
 			// and continue with an empty dictionary
 			if err != nil {
-				if flags.Args.Verbose { fmt.Fprintf(os.Stderr, "warning: %s\n", err.Error()) }
+				if flags.Args.Verbose {
+					fmt.Fprintf(os.Stderr, "warning: %s\n", err.Error())
+				}
 			}
 		}
 
 	// if there's another kind of error trying to load the default dictionary
 	// print a warning if verbose and continue with an empty dictionary
 	case err != nil:
-		if flags.Args.Verbose { fmt.Fprintf(os.Stderr, "warning: %s\n", err.Error()) }
+		if flags.Args.Verbose {
+			fmt.Fprintf(os.Stderr, "warning: %s\n", err.Error())
+		}
 	}
 
 	if flags.Args.Client {

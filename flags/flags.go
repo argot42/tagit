@@ -1,29 +1,31 @@
 package flags
 
 import (
-	"os/user"
-	"flag"
 	"errors"
+	"flag"
+	"os/user"
 	"path/filepath"
 )
 
 type StrFlagSlice []string
 
 func (sfs *StrFlagSlice) String() (s string) {
-	for _,str := range *sfs { s += str + " " }
+	for _, str := range *sfs {
+		s += str + " "
+	}
 	return
 }
 
-func (sfs *StrFlagSlice) Set (value string) error {
+func (sfs *StrFlagSlice) Set(value string) error {
 	*sfs = append(*sfs, value)
 	return nil
 }
 
 type Flags struct {
-	DB string
+	DB                           string
 	Verbose, Interactive, Client bool
-	Tags StrFlagSlice
-	Files []string
+	Tags                         StrFlagSlice
+	Files                        []string
 }
 
 var Args Flags

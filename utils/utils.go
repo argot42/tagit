@@ -1,12 +1,12 @@
 package utils
 
 import (
-	"sort"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
-func Prepend (s string, slice []string) []string {
+func Prepend(s string, slice []string) []string {
 	new_slice := make([]string, len(slice)+1)
 	new_slice[0] = s
 	copy(new_slice[1:], slice)
@@ -22,19 +22,23 @@ func StringSortedInsert(s string, slc *[]string) {
 	(*slc)[index] = s
 }
 
-func SplitNameExt (path string) (name, ext string) {
+func SplitNameExt(path string) (name, ext string) {
 	name = filepath.Base(path)
 
-	if len(name) < 3 { return }
+	if len(name) < 3 {
+		return
+	}
 
 	index := -1
-	for i:=1; i<len(name); i++ {
+	for i := 1; i < len(name); i++ {
 		if name[i] == '.' {
 			index = i
 			break
 		}
 	}
-	if index < 0 { return }
+	if index < 0 {
+		return
+	}
 
 	ext = name[index:]
 

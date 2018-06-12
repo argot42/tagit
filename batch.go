@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"sync"
-	"path/filepath"
-	"github.com/argot42/tagit/flags"
 	"github.com/argot42/tagit/dictionary"
-	"github.com/argot42/tagit/options"
 	"github.com/argot42/tagit/fileproc"
+	"github.com/argot42/tagit/flags"
+	"github.com/argot42/tagit/options"
 	"github.com/argot42/tagit/utils"
+	"os"
+	"path/filepath"
+	"sync"
 )
 
-func batch (defaultDict dictionary.Dictionary) {
-	if flags.Args.Verbose { fmt.Println("Starting batch tagging") }
+func batch(defaultDict dictionary.Dictionary) {
+	if flags.Args.Verbose {
+		fmt.Println("Starting batch tagging")
+	}
 
 	if flags.Args.Interactive {
 		interactive(defaultDict)
@@ -22,7 +24,7 @@ func batch (defaultDict dictionary.Dictionary) {
 	}
 }
 
-func interactive (defaultDict dictionary.Dictionary) {
+func interactive(defaultDict dictionary.Dictionary) {
 	for _, item := range flags.Args.Files {
 		dict := loadd(item, defaultDict)
 
@@ -56,10 +58,14 @@ func interactive (defaultDict dictionary.Dictionary) {
 					matches_plus_tag := utils.Prepend(tag, matches)
 					o := options.ChooseNumeric(0, matches_plus_tag, "Choose tag ")
 
-					if o < 0 || o >= len(matches_plus_tag) { continue }
+					if o < 0 || o >= len(matches_plus_tag) {
+						continue
+					}
 
 					tagToAdd = matches_plus_tag[o]
-					if o == 0 { validToDict = true } 
+					if o == 0 {
+						validToDict = true
+					}
 				}
 			}
 
@@ -67,43 +73,55 @@ func interactive (defaultDict dictionary.Dictionary) {
 			if options.YesNo(options.Yes, "Add tag (%s) to file (%s) ?", tagToAdd, file.Name()) {
 				//if err := file.Add(tagToAdd); err != nil { warningFile(tagToAdd, file.Path(), err) }
 				file.Add(tagToAdd)
-				
+
 				// add tag to dictionary if flags allows it (ask user)
-				if !validToDict { continue }
+				if !validToDict {
+					continue
+				}
 				if options.YesNo(options.Yes, "Add tag (%s) to dictionary (%s) ?", tagToAdd, dict.Name()) {
-					if err := dict.Add(tagToAdd); err != nil { warningDict(tagToAdd, dict.Name(), err) }	
+					if err := dict.Add(tagToAdd); err != nil {
+						warningDict(tagToAdd, dict.Name(), err)
+					}
 				}
 			}
 		}
 
 		// write tags to filename
-		if err := file.Write(); err != nil { warningFile(file.Path(), err) }
+		if err := file.Write(); err != nil {
+			warningFile(file.Path(), err)
+		}
 	}
 }
 
-func noninteractive (defaultDict dictionary.Dictionary) {
+func noninteractive(defaultDict dictionary.Dictionary) {
 	info, err := concur(defaultDict)
 
-	out:
+out:
 	for {
 		select {
 		case i, more := <-info:
-			if !more { break out }
-			if flags.Args.Verbose{ fmt.Print(i) }
+			if !more {
+				break out
+			}
+			if flags.Args.Verbose {
+				fmt.Print(i)
+			}
 		case e := <-err:
 			warning(e.Error())
 		}
 	}
 }
 
-func concur (defaultDict dictionary.Dictionary) (info chan string, err chan error) {
+func concur(defaultDict dictionary.Dictionary) (info chan string, err chan error) {
 	var wg sync.WaitGroup
 	info = make(chan string, len(flags.Args.Files))
 	err = make(chan error, len(flags.Args.Files))
 
 	// process files
 	wg.Add(len(flags.Args.Files))
-	for _, f := range flags.Args.Files { go processFile(f, loadd(f, defaultDict), info, err, &wg) }
+	for _, f := range flags.Args.Files {
+		go processFile(f, loadd(f, defaultDict), info, err, &wg)
+	}
 
 	// wait until all goroutines finish and then close channels
 	// to signal main to end
@@ -115,12 +133,12 @@ func concur (defaultDict dictionary.Dictionary) (info chan string, err chan erro
 	return
 }
 
-func processFile (path string, dict dictionary.Dictionary, info chan string, e chan error, wg *sync.WaitGroup) {
+func processFile(path string, dict dictionary.Dictionary, info chan string, e chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	file, err := fileproc.Parse(path)	
+	file, err := fileproc.Parse(path)
 	if err != nil {
-		e<-fmt.Errorf("Warning while parsing (%s): %s\n", path, err.Error())
+		e <- fmt.Errorf("Warning while parsing (%s): %s\n", path, err.Error())
 		return
 	}
 
@@ -129,24 +147,26 @@ func processFile (path string, dict dictionary.Dictionary, info chan string, e c
 
 		// writing to dict
 		if err = dict.Add(tag); err != nil {
-			e<-fmt.Errorf("Warning adding tag (%s) to dictionary (%s): %s\n", tag, dict.Name(), err.Error())
+			e <- fmt.Errorf("Warning adding tag (%s) to dictionary (%s): %s\n", tag, dict.Name(), err.Error())
 			continue
 		}
-		
-		info<-fmt.Sprintf("Tag (%s) added to dictionary (%s)!\n", tag, dict.Name())
+
+		info <- fmt.Sprintf("Tag (%s) added to dictionary (%s)!\n", tag, dict.Name())
 	}
 
 	if err = file.Write(); err != nil {
-		e<-fmt.Errorf("Warning writing tags to file (%s) failed\n", file.Name())
+		e <- fmt.Errorf("Warning writing tags to file (%s) failed\n", file.Name())
 		return
 	}
 
-	info<-fmt.Sprintf("Tags written to file (%s)!\n", file.Name())
+	info <- fmt.Sprintf("Tags written to file (%s)!\n", file.Name())
 }
 
-func loadd (filename string, defaultDict dictionary.Dictionary) (currentDict dictionary.Dictionary) {
-	if flags.Args.Verbose { fmt.Println("Loading local dictionary") }	
-	
+func loadd(filename string, defaultDict dictionary.Dictionary) (currentDict dictionary.Dictionary) {
+	if flags.Args.Verbose {
+		fmt.Println("Loading local dictionary")
+	}
+
 	itemDir := filepath.Dir(filename)
 	currentDict, err := dictionary.LoadDictionary(itemDir)
 

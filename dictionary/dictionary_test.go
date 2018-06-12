@@ -2,9 +2,9 @@ package dictionary
 
 import (
 	"os"
+	"path/filepath"
 	"sort"
 	"testing"
-	"path/filepath"
 )
 
 type PathTest struct {
@@ -14,22 +14,22 @@ type PathTest struct {
 
 const (
 	SUCCESS = 0
-	FAIL = iota
+	FAIL    = iota
 )
 
-func TestNewDict (t *testing.T) {
-	list_of_tests := []PathTest{ 
-		PathTest{ Type: FAIL, Path: "/etc" },
-		PathTest{ Type: FAIL, Path: "~/programming" },
-		PathTest{ Type: FAIL, Path: "~" },
-		PathTest{ Type: FAIL, Path: ".." },
-		PathTest{ Type: FAIL, Path: "." },
-		PathTest{ Type: SUCCESS, Path: "/tmp" },
-		PathTest{ Type: SUCCESS, Path: "/tmp/" },
-		PathTest{ Type: SUCCESS, Path: "/tmp/.dict.db" },
+func TestNewDict(t *testing.T) {
+	list_of_tests := []PathTest{
+		PathTest{Type: FAIL, Path: "/etc"},
+		PathTest{Type: FAIL, Path: "~/programming"},
+		PathTest{Type: FAIL, Path: "~"},
+		PathTest{Type: FAIL, Path: ".."},
+		PathTest{Type: FAIL, Path: "."},
+		PathTest{Type: SUCCESS, Path: "/tmp"},
+		PathTest{Type: SUCCESS, Path: "/tmp/"},
+		PathTest{Type: SUCCESS, Path: "/tmp/.dict.db"},
 	}
 
-	for _,path := range list_of_tests {
+	for _, path := range list_of_tests {
 		d, err := LoadDictionary(path.Path)
 
 		if err != nil {
@@ -49,19 +49,19 @@ func TestNewDict (t *testing.T) {
 	}
 }
 
-func TestCreateDict (t *testing.T) {
-	list_of_tests := []PathTest{ 
-		PathTest{ Type: SUCCESS, Path: "/tmp" },
-		PathTest{ Type: SUCCESS, Path: "/tmp/test" },
+func TestCreateDict(t *testing.T) {
+	list_of_tests := []PathTest{
+		PathTest{Type: SUCCESS, Path: "/tmp"},
+		PathTest{Type: SUCCESS, Path: "/tmp/test"},
 		//PathTest{ Type: SUCCESS, Path: "./test" },
 		//PathTest{ Type: SUCCESS, Path: "../test" },
 	}
 
-	for _,path := range list_of_tests {
+	for _, path := range list_of_tests {
 		dictPath := filepath.Join(path.Path, ".dict.db")
 
 		_, err := CreateDictionary(dictPath)
-		
+
 		if err != nil {
 			if path.Type == SUCCESS {
 				t.Errorf("%s - %s\n", path.Path, err.Error())
@@ -84,11 +84,13 @@ func TestCreateDict (t *testing.T) {
 	}
 }
 
-func TestAddTag (t *testing.T) {
+func TestAddTag(t *testing.T) {
 	dict, err := LoadDictionary("/tmp/test/test001")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	tags := []string{ "foo0", "a", "c", "b", "x", "i", "f", "d", "漢" }
+	tags := []string{"foo0", "a", "c", "b", "x", "i", "f", "d", "漢"}
 	//tags := []string{ "e", "b", "a" }
 	for _, s := range tags {
 		err = dict.Add(s)
@@ -100,9 +102,11 @@ func TestAddTag (t *testing.T) {
 	}
 }
 
-func TestLoadDict (t *testing.T) {
+func TestLoadDict(t *testing.T) {
 	dict, err := LoadDictionary("/tmp/test001")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	t.Log(dict.Tags)
 

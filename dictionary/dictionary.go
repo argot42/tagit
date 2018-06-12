@@ -1,15 +1,15 @@
 package dictionary
 
 import (
-	"os"
-	"io"
 	"bufio"
 	"bytes"
 	"errors"
-	"strings"
-	"path/filepath"
 	"github.com/argot42/tagit/utils"
 	"github.com/renstrom/fuzzysearch/fuzzy"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 const BUFFER = 2048
@@ -27,9 +27,11 @@ type Dictionary struct {
 	Tags []string
 }
 
-func (d *Dictionary) Add (tag string) (err error) {
+func (d *Dictionary) Add(tag string) (err error) {
 	// if no initialized return error
-	if !d.Initialized() { return errors.New("The dictionary is not initialized") }
+	if !d.Initialized() {
+		return errors.New("The dictionary is not initialized")
+	}
 
 	// insert into structure
 	utils.StringSortedInsert(tag, &d.Tags)
@@ -45,16 +47,18 @@ func (d *Dictionary) Add (tag string) (err error) {
 	return
 }
 
-func sortedWrite (tag string, f *os.File) (err error) {
+func sortedWrite(tag string, f *os.File) (err error) {
 	position, err := findPos([]byte(tag), f)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
-	err = writeInto([]byte(tag + "\n"), position, f)
+	err = writeInto([]byte(tag+"\n"), position, f)
 
 	return
 }
 
-func findPos (tag []byte, file *os.File) (position int64, err error) {
+func findPos(tag []byte, file *os.File) (position int64, err error) {
 	reader := bufio.NewReader(file)
 
 	var read int
@@ -63,24 +67,32 @@ func findPos (tag []byte, file *os.File) (position int64, err error) {
 		position += int64(read)
 
 		b, err = reader.ReadBytes('\n')
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 
-		if bytes.Compare(tag, b) <= 0 { break }
+		if bytes.Compare(tag, b) <= 0 {
+			break
+		}
 
 		read = len(b)
 	}
 
-	if err != nil && err != io.EOF { return }
+	if err != nil && err != io.EOF {
+		return
+	}
 
 	return position, nil
 }
 
-func writeInto (tail []byte, position int64, file *os.File) (err error) {
+func writeInto(tail []byte, position int64, file *os.File) (err error) {
 	total := len(tail)
 	b := make([]byte, BUFFER)
 
 	_, err = file.Seek(position, 0)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	for {
 		n, err := file.Read(b)
@@ -107,16 +119,20 @@ func (d *Dictionary) Name() string {
 	return d.Path
 }
 
-func LoadDictionary (path string) (d Dictionary, err error) {
+func LoadDictionary(path string) (d Dictionary, err error) {
 	fileinfo, err := os.Stat(path)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	if fileinfo.IsDir() {
 		path = filepath.Join(path, ".dict.db")
 	}
 
 	file, err := os.Open(path)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	defer file.Close()
 
 	d.Path = path
@@ -125,22 +141,26 @@ func LoadDictionary (path string) (d Dictionary, err error) {
 		var line string
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			if err == io.EOF { break }
+			if err == io.EOF {
+				break
+			}
 			return
 		}
 
-		d.Tags = append(d.Tags, strings.TrimRight(line, "\r\n"))	
+		d.Tags = append(d.Tags, strings.TrimRight(line, "\r\n"))
 	}
 
 	return d, nil
 }
 
-func (d *Dictionary) FFind (tag string, flag int) (matches []string, err error) {
+func (d *Dictionary) FFind(tag string, flag int) (matches []string, err error) {
 	switch flag {
 	case ExactFail:
 		rank := fuzzy.RankFindFold(tag, d.Tags)
-		for _,v := range rank {
-			if v.Distance == 0 { return []string{}, ExactMatchErr }
+		for _, v := range rank {
+			if v.Distance == 0 {
+				return []string{}, ExactMatchErr
+			}
 			matches = append(matches, v.Target)
 		}
 
@@ -151,9 +171,11 @@ func (d *Dictionary) FFind (tag string, flag int) (matches []string, err error) 
 	return
 }
 
-func CreateDictionary (path string) (d Dictionary, err error) {
+func CreateDictionary(path string) (d Dictionary, err error) {
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0664)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	defer file.Close()
 
 	d.Path = path

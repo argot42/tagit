@@ -1,31 +1,31 @@
 package fileproc
 
 import (
+	"github.com/argot42/tagit/utils"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
-	"path/filepath"
-	"github.com/argot42/tagit/utils"
 )
 
 var r = regexp.MustCompile(`^([\p{L}\s\w]*)\[?([\p{L}\s\w]*)\]?$`)
 
 type File struct {
-	path string
-	name string
-	ext string
+	path     string
+	name     string
+	ext      string
 	brackets bool
-	tags []string
+	tags     []string
 }
 
-func (f *File) Add (tag string) {
+func (f *File) Add(tag string) {
 	utils.StringSortedInsert(tag, &f.tags)
 }
 
 func (f *File) Write() error {
 	return os.Rename(f.path, filepath.Join(
-			filepath.Dir(f.path),
-			f.name + "[" + strings.Join(f.tags, " ") + "]" + f.ext))
+		filepath.Dir(f.path),
+		f.name+"["+strings.Join(f.tags, " ")+"]"+f.ext))
 }
 
 func (f *File) Name() string {
@@ -36,14 +36,16 @@ func (f *File) Path() (path string) {
 	return f.path
 }
 
-func Parse (path string) (file *File, err error) {
+func Parse(path string) (file *File, err error) {
 	fi, err := os.Stat(path)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	name, extension := utils.SplitNameExt(fi.Name())
 	file = &File{
 		path: path,
-		ext: extension,
+		ext:  extension,
 	}
 
 	match := r.FindStringSubmatch(name)
